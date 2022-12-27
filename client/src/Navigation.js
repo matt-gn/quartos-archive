@@ -12,7 +12,6 @@ import MenuItem from 'material-ui/MenuItem';
 import CircularProgress from 'material-ui/CircularProgress';
 import Divider from 'material-ui/Divider';
 import DropDownMenu from 'material-ui/DropDownMenu';
-import NavigationArrowUpward from 'material-ui/svg-icons/navigation/arrow-upward';
 import MenuIcon from 'material-ui/svg-icons/navigation/menu';
 import MoreVert from 'material-ui/svg-icons/navigation/more-vert';
 import IconButton from 'material-ui/IconButton';
@@ -23,7 +22,6 @@ import { setCurrentLayout, layoutOptions } from './modules/documentGrid';
 
 import LoginRegistrationDialog from './LoginRegistrationDialog';
 import AdminDialog from './AdminDialog';
-import SearchBar from './SearchBar';
 
 const LoginMenuBody = props => {
   if (props.currentUser 
@@ -112,10 +110,10 @@ class Navigation extends Component {
       }
     }
     return (
-      <div>
+      <div>	// NOTE New nav bar logo
         <AppBar
           title={<div>
-            <span style={{ color: '#FFF', fontSize: '24px' }}>{this.props.title}</span>
+            <span><img src="/images/archive.png" height="65" width="220"></img></span>
             {this.props.isLoading &&
               <CircularProgress color={'#FFF'} style={{top: '12px', left: '18px'}}/>
             }
@@ -134,7 +132,6 @@ class Navigation extends Component {
             <div style={{ display: 'flex' }}>
               {!this.props.isHome && 
                 <div style={{display: 'flex'}}>
-                  <SearchBar projectID={this.props.inputId } />
                   <DropDownMenu
                     value={this.props.currentLayout}
                     onChange={this.props.setCurrentLayout}
@@ -157,15 +154,6 @@ class Navigation extends Component {
                 labelPosition='before'
                 onClick={event => {this.props.toggleAuthMenu(event.currentTarget);}}
               />
-              {!this.props.isHome && (
-                <IconButton
-                  onClick={this.onCloseProject}
-                  tooltip="Return to project list"
-                  tooltipPosition="bottom-left"
-                >
-                  <NavigationArrowUpward color="white" />
-                </IconButton>
-              )}
             </div>
           }
           style={{position: 'fixed', top: 0, zIndex: 9999}}
@@ -191,12 +179,12 @@ class Navigation extends Component {
           targetOrigin={{horizontal: 'middle', vertical: 'top'}}
           useLayerForClickAway={false}
           autoCloseWhenOffScreen={false}
-        >
+      	>
           Set grid layout
         </Popover>
         <LoginRegistrationDialog />
         <AdminDialog />
-      </div>
+      </div>	// NOTE Removed search bar and 'Return to top' button
     )
   }
 }

@@ -17,11 +17,11 @@ class TableOfContents extends Component {
 
   render() {
     const { sidebarWidth, sidebarOpen, adminEnabled, projectId, contentsChildren, openDocumentIds, writeEnabled } = this.props
-
+    /// NOTE Added 'div id="sidebar"' so it is accessible via CSS
     return (
       <Drawer open={sidebarOpen} width={sidebarWidth}>
         <div style={{minHeight: '100%', paddingTop: '72px', display: 'flex', alignItems: 'stretch'}}>
-          <div style={{flexGrow: '1'}}>
+          <div id="sidebar" style={{flexGrow: '1'}}>
             { writeEnabled &&
               <Toolbar noGutter={true} style={{marginLeft: 10, background: white}}>
                 <ToolbarGroup >

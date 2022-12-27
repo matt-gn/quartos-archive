@@ -112,7 +112,7 @@ const initialState = {
   deleteDialogKind: null,
   snackBarOpen: false,
   snackBarMessage: null,
-  currentLayout: 2
+  currentLayout: 1	// NOTE Changed default layout to 1x2
 };
 
 export default function(state = initialState, action) {

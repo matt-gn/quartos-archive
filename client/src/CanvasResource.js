@@ -160,13 +160,14 @@ class CanvasResource extends Component {
       preserveImageSizeOnResize: true,
     });
     const hasLayers = this.hasLayers();
-
+    
+    // NOTE Modified up/down buttons to next/previous, 'Page/Pages' to titles
     const upButton = this.upButton = new OpenSeadragon.Button({
-      tooltip: "Previous layer",
-      srcRest: "/images/up_rest.png",
-      srcGroup: "/images/up_grouphover.png",
-      srcHover: "/images/up_hover.png",
-      srcDown: "/images/up_pressed.png",
+      tooltip: "Previous page",
+      srcRest: "/images/previous_rest.png",
+      srcGroup: "/images/previous_grouphover.png",
+      srcHover: "/images/previous_hover.png",
+      srcDown: "/images/previous_pressed.png",
       onRelease: () => {
         let prevPage = this.state.currentPage - 1;
         if (this.state && this.state.totalPages && this.state.currentPage === 0) {
@@ -188,17 +189,21 @@ class CanvasResource extends Component {
       content.tileSources.forEach((tileSource, index) => {
         const opt = OpenSeadragon.makeNeutralElement('option');
         opt.value = index;
-        opt.label = `${index+1}: ${this.getLayerName(index)}`;
-        layerSelect.appendChild(opt);
+	if (this.getLayerName(index).includes('-')) {
+          opt.label = `Pages ${this.getLayerName(index)}`;
+	} else {
+          opt.label = `Page ${this.getLayerName(index)}`;
+	}
+	layerSelect.appendChild(opt);
       });
     }
 
     const downButton = this.downButton = new OpenSeadragon.Button({
-      tooltip: "Next layer",
-      srcRest: "/images/down_rest.png",
-      srcGroup: "/images/down_grouphover.png",
-      srcHover: "/images/down_hover.png",
-      srcDown: "/images/down_pressed.png",
+      tooltip: "Next page",
+      srcRest: "/images/next_rest.png",
+      srcGroup: "/images/next_grouphover.png",
+      srcHover: "/images/next_hover.png",
+      srcDown: "/images/next_pressed.png",
       onRelease: () => {
         let nextPage = this.state.currentPage + 1;
         if (this.state && this.state.totalPages && this.state.currentPage === (this.state.totalPages-1)) {
@@ -422,6 +427,7 @@ class CanvasResource extends Component {
     return imageUrlForThumbnail;
   }
 
+  // NOTE Add 'Page' or 'Pages' to title
   refreshLayerSelect(tileSources) {
     if (this.layerSelect) {
       const selected = this.layerSelect.selectedIndex;
@@ -431,8 +437,12 @@ class CanvasResource extends Component {
       tileSources.forEach((t, index) => {
         const opt = OpenSeadragon.makeNeutralElement('option');
         opt.value = index;
-        opt.label = `${index+1}: ${this.getLayerName(index)}`;
-        this.layerSelect.appendChild(opt);
+        if (this.getLayerName(index).includes('-')) {
+          opt.label = `Pages ${this.getLayerName(index)}`;
+        } else {
+          opt.label = `Page ${this.getLayerName(index)}`;
+        }
+	this.layerSelect.appendChild(opt);
       });
       this.layerSelect.selectedIndex = selected;
     }

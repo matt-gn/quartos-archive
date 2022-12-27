@@ -25,4 +25,4 @@ services:
       REDIS_URL: redis://redis_db:6379
       REDIS_PROVIDER: REDIS_URL
     ports:
-      - "443:443"
+      - "3000:3000"

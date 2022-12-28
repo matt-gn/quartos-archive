@@ -33,7 +33,7 @@ export default class App extends Component {
             <Route exact path='/'>
 	      <Redirect to='/1' />
 	    </Route>
-	    <Route exact path='/projects' component={Home}>
+	    <Route exact path='/projects' component={Home} />
             <Route path='/:slug' component={Project} />
           </main>
         </div>

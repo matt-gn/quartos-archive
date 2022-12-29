@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import JSZip from 'jszip';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import OpenSeadragon from 'openseadragon-fabricjs-overlay/openseadragon/openseadragon';
@@ -50,19 +51,19 @@ import deepEqual from 'deep-equal';
 openSeaDragonFabricOverlay(OpenSeadragon, fabric);
 
 // from https://stackoverflow.com/a/48343346/6126327 - show consistent stroke width regardless of object scaling
-fabric.Object.prototype._renderStroke = function(ctx) {
-    if (!this.stroke || this.strokeWidth === 0) {
-        return;
-    }
-    if (this.shadow && !this.shadow.affectStroke) {
-        this._removeShadow(ctx);
-    }
-    ctx.save();
-    ctx.scale(1 / this.scaleX, 1 / this.scaleY);
-    this._setLineDash(ctx, this.strokeDashArray, this._renderDashedStroke);
-    this._applyPatternGradientTransform(ctx, this.stroke);
-    ctx.stroke();
-    ctx.restore();
+fabric.Object.prototype._renderStroke = function (ctx) {
+  if (!this.stroke || this.strokeWidth === 0) {
+    return;
+  }
+  if (this.shadow && !this.shadow.affectStroke) {
+    this._removeShadow(ctx);
+  }
+  ctx.save();
+  ctx.scale(1 / this.scaleX, 1 / this.scaleY);
+  this._setLineDash(ctx, this.strokeDashArray, this._renderDashedStroke);
+  this._applyPatternGradientTransform(ctx, this.stroke);
+  ctx.stroke();
+  ctx.restore();
 };
 
 const strokeWidth = 3.0;
@@ -75,11 +76,12 @@ const maxZoomPixelRatio = 2.25;
 class CanvasResource extends Component {
   constructor(props) {
     super(props);
-    this.osdId =`openseadragon-${this.props.document_id}-${Date.now()}`;
+    this.osdId = `openseadragon-${this.props.document_id}-${Date.now()}`;
     this.osdViewer = null;
     this.upButton = null;
     this.downButton = null;
     this.layerSelect = null;
+    this.downloadButton = null;
     this.imageLayerControls = null;
     this.highlight_map = {};
     this.viewportUpdatedYet = false;
@@ -97,10 +99,9 @@ class CanvasResource extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.content && this.props.content 
-        && this.props.content.tileSources && this.props.content.tileSources[0]
-        && !deepEqual(prevProps.content.tileSources, this.props.content.tileSources))
-    {
+    if (prevProps.content && this.props.content
+      && this.props.content.tileSources && this.props.content.tileSources[0]
+      && !deepEqual(prevProps.content.tileSources, this.props.content.tileSources)) {
       this.openTileSources(this.props.content.tileSources);
       if (this.props.content.tileSources.length !== prevProps.content.tileSources.length) {
         this.osdViewer.goToPage(0);
@@ -108,7 +109,7 @@ class CanvasResource extends Component {
       } else {
         this.osdViewer.goToPage(this.props.pageToChange[this.getInstanceKey()] || 0);
       }
-      const hasLayerControls = this.osdViewer.controls 
+      const hasLayerControls = this.osdViewer.controls
         && this.osdViewer.controls.find(ctrl => ctrl.element.className === 'image-layer-controls');
       if (this.hasLayers() && !hasLayerControls) {
         this.osdViewer.addControl(this.imageLayerControls, {
@@ -121,9 +122,9 @@ class CanvasResource extends Component {
       this.props.setSaving({ doneSaving: true });
       this.props.setLastSaved(new Date().toLocaleString('en-US'));
     }
-    if (this.layerSelect 
-        && prevProps.content && this.props.content  && this.props.content.tileSources
-        && !deepEqual(prevProps.content.iiifTileNames, this.props.content.iiifTileNames)) {
+    if (this.layerSelect
+      && prevProps.content && this.props.content && this.props.content.tileSources
+      && !deepEqual(prevProps.content.iiifTileNames, this.props.content.iiifTileNames)) {
       this.refreshLayerSelect(this.props.content.tileSources);
       this.props.setSaving({ doneSaving: true });
       this.props.setLastSaved(new Date().toLocaleString('en-US'));
@@ -133,12 +134,12 @@ class CanvasResource extends Component {
     }
     if (this.props.highlightsHidden[this.getInstanceKey()] !== prevProps.highlightsHidden[this.getInstanceKey()]
       && !this.props.highlightsHidden[this.getInstanceKey()]) {
-      this.osdViewer.raiseEvent( 'update-viewport', {} );
+      this.osdViewer.raiseEvent('update-viewport', {});
     }
   }
 
   componentDidMount() {
-    const {content, highlight_map, document_id, setCanvasHighlightColor, setAddTileSourceMode, updateHighlight, addHighlight, setHighlightThumbnail} = this.props;
+    const { content, highlight_map, document_id, setCanvasHighlightColor, setAddTileSourceMode, updateHighlight, addHighlight, setHighlightThumbnail } = this.props;
     this.highlight_map = highlight_map;
 
     const initialColor = yellow500;
@@ -160,7 +161,7 @@ class CanvasResource extends Component {
       preserveImageSizeOnResize: true,
     });
     const hasLayers = this.hasLayers();
-    
+
     // NOTE Modified up/down buttons to next/previous, 'Page/Pages' to titles
     const upButton = this.upButton = new OpenSeadragon.Button({
       tooltip: "Previous page",
@@ -177,26 +178,6 @@ class CanvasResource extends Component {
         viewer.goToPage(prevPage);
       },
     });
-    const layerSelect = this.layerSelect = OpenSeadragon.makeNeutralElement('select');
-    layerSelect.style = '';
-    layerSelect.className = 'image-layer-select';
-    layerSelect.name = `${this.getInstanceKey()}-layer-select`;
-    layerSelect.addEventListener('change', () => {
-      viewer.goToPage(parseInt(layerSelect.value, 10));
-    });
-    
-    if (hasLayers) {
-      content.tileSources.forEach((tileSource, index) => {
-        const opt = OpenSeadragon.makeNeutralElement('option');
-        opt.value = index;
-	if (this.getLayerName(index).includes('-')) {
-          opt.label = `Pages ${this.getLayerName(index)}`;
-	} else {
-          opt.label = `Page ${this.getLayerName(index)}`;
-	}
-	layerSelect.appendChild(opt);
-      });
-    }
 
     const downButton = this.downButton = new OpenSeadragon.Button({
       tooltip: "Next page",
@@ -206,7 +187,7 @@ class CanvasResource extends Component {
       srcDown: "/images/next_pressed.png",
       onRelease: () => {
         let nextPage = this.state.currentPage + 1;
-        if (this.state && this.state.totalPages && this.state.currentPage === (this.state.totalPages-1)) {
+        if (this.state && this.state.totalPages && this.state.currentPage === (this.state.totalPages - 1)) {
           // Wrap around if at end
           nextPage = 0;
         }
@@ -214,9 +195,41 @@ class CanvasResource extends Component {
       },
     });
 
+    const layerSelect = this.layerSelect = OpenSeadragon.makeNeutralElement('select');
+    layerSelect.style = '';
+    layerSelect.className = 'image-layer-select';
+    layerSelect.name = `${this.getInstanceKey()}-layer-select`;
+    layerSelect.addEventListener('change', () => {
+      viewer.goToPage(parseInt(layerSelect.value, 10));
+    });
+    if (hasLayers) {
+      content.tileSources.forEach((tileSource, index) => {
+        const opt = OpenSeadragon.makeNeutralElement('option');
+        opt.value = index;
+        if (this.getLayerName(index).includes('-')) {
+          opt.label = `Pages ${this.getLayerName(index)}`;
+        } else {
+          opt.label = `Page ${this.getLayerName(index)}`;
+        }
+        layerSelect.appendChild(opt);
+      });
+    }
+
+    // NOTE Download Image button
+    const downloadButton = this.downloadButton = new OpenSeadragon.Button({
+      tooltip: "Download document as ZIP file",
+      srcRest: "/images/download.png",
+      srcGroup: "/images/download.png",
+      srcHover: "/images/download.png",
+      srcDown: "/images/download.png",
+      onRelease: () => {
+        this.makeZip(content);
+      },
+    });
+
     const wrapper = this.imageLayerControls = OpenSeadragon.makeNeutralElement('div');
     wrapper.className = 'image-layer-controls';
-    const buttons = [upButton, downButton];
+    const buttons = [downloadButton, upButton, downButton];
     const buttonGroup = new OpenSeadragon.ButtonGroup({ buttons });
     buttonGroup.element.className = 'layer-button-group';
     wrapper.appendChild(buttonGroup.element);
@@ -231,7 +244,7 @@ class CanvasResource extends Component {
       });
     }
 
-    const overlay = this.overlay = viewer.fabricjsOverlay({scale: fabricViewportScale});
+    const overlay = this.overlay = viewer.fabricjsOverlay({ scale: fabricViewportScale });
 
     let tileSources = (content && content.tileSources) ? content.tileSources : [];
     let imageUrlForThumbnail = null
@@ -253,7 +266,7 @@ class CanvasResource extends Component {
         zoomLevel = minZoom;
       } else if (this.state.zoomLevel <= maxZoom) {
         zoomLevel = this.state.zoomLevel;
-      } 
+      }
       this.setState((prevState) => ({ ...prevState, minZoom, maxZoom, zoomLevel }));
       if (!this.viewportUpdatedForPageYet) {
         this.renderHighlights(overlay, highlight_map);
@@ -286,7 +299,7 @@ class CanvasResource extends Component {
       });
     });
 
-    viewer.addHandler('open', this.onOpen.bind(this) );
+    viewer.addHandler('open', this.onOpen.bind(this));
 
     viewer.addHandler('zoom', event => {
       const maxZoom = this.osdViewer.viewport.getMaxZoom();
@@ -296,7 +309,7 @@ class CanvasResource extends Component {
         zoomLevel = minZoom;
       } else if (event.zoom <= maxZoom) {
         zoomLevel = event.zoom;
-      } 
+      }
       this.setState((prevState) => ({ ...prevState, zoomLevel, minZoom, maxZoom }));
     });
 
@@ -305,10 +318,10 @@ class CanvasResource extends Component {
 
     overlay.fabricCanvas().on('object:selected', event => {
       if (this.currentMode === 'pan' && event.target && event.target._highlightUid) {
-          window.setFocusHighlight(document_id, event.target._highlightUid, key); // the code that pops up the annotation
-          overlay.fabricCanvas().discardActiveObject();
+        window.setFocusHighlight(document_id, event.target._highlightUid, key); // the code that pops up the annotation
+        overlay.fabricCanvas().discardActiveObject();
       } else if (this.currentMode === 'edit' && event && event.target._isTarget) {
-        for (let i = 0; i < 3; i++){ // For some reason it's necessary to do this multiple times
+        for (let i = 0; i < 3; i++) { // For some reason it's necessary to do this multiple times
           overlay.fabricCanvas().forEachObject((obj) => {
             if (obj && obj._isTargetChild) {
               overlay.fabricCanvas().remove(obj);
@@ -317,28 +330,28 @@ class CanvasResource extends Component {
         }
       }
     });
-    overlay.fabricCanvas().on('mouse:down', this.canvasMouseDown.bind(this) );
-    overlay.fabricCanvas().on('mouse:move', this.canvasMouseMove.bind(this) );
-    overlay.fabricCanvas().on('mouse:up', this.canvasMouseUp.bind(this) );
+    overlay.fabricCanvas().on('mouse:down', this.canvasMouseDown.bind(this));
+    overlay.fabricCanvas().on('mouse:move', this.canvasMouseMove.bind(this));
+    overlay.fabricCanvas().on('mouse:up', this.canvasMouseUp.bind(this));
     overlay.fabricCanvas().on('object:modified', event => {
-      if( this.currentMode === 'edit' && event && event.target && event.target._highlightUid && !event.target._isTargetChild ) {
-          const highlight_id = this.highlight_map[event.target._highlightUid].id;
-          if (highlight_id && imageUrlForThumbnail) {
-            const highlightCoords = event.target._isMarker ?
-              this.computeMarkerThumbBounds(event.target) :
-              event.target.aCoords
-            
-            this.props.setSaving({ doneSaving: false });
-            updateHighlight(
-              highlight_id, 
-              {target: JSON.stringify(event.target.toJSON(['_highlightUid', '_isMarker']))},
-              () => {
-                this.props.setSaving({ doneSaving: true });
-                this.props.setLastSaved(new Date().toLocaleString('en-US'));
-              }
-            );
-            setHighlightThumbnail(highlight_id, imageUrlForThumbnail, highlightCoords, event.target.toSVG());
-          }
+      if (this.currentMode === 'edit' && event && event.target && event.target._highlightUid && !event.target._isTargetChild) {
+        const highlight_id = this.highlight_map[event.target._highlightUid].id;
+        if (highlight_id && imageUrlForThumbnail) {
+          const highlightCoords = event.target._isMarker ?
+            this.computeMarkerThumbBounds(event.target) :
+            event.target.aCoords
+
+          this.props.setSaving({ doneSaving: false });
+          updateHighlight(
+            highlight_id,
+            { target: JSON.stringify(event.target.toJSON(['_highlightUid', '_isMarker'])) },
+            () => {
+              this.props.setSaving({ doneSaving: true });
+              this.props.setLastSaved(new Date().toLocaleString('en-US'));
+            }
+          );
+          setHighlightThumbnail(highlight_id, imageUrlForThumbnail, highlightCoords, event.target.toSVG());
+        }
       }
     });
 
@@ -348,7 +361,7 @@ class CanvasResource extends Component {
         window.showRollover(this.props.document_id, event.target._highlightUid, key);
       }
     });
-    overlay.fabricCanvas().on('mouse:out', function(event) {
+    overlay.fabricCanvas().on('mouse:out', function (event) {
       if (this.currentMode === 'pan' && event.target && event.target._highlightUid) {
         window.hideRollover(event.target._highlightUid);
       }
@@ -378,10 +391,41 @@ class CanvasResource extends Component {
     });
 
     // handle window resize
-    window.onresize = function() {
+    window.onresize = function () {
       overlay.resize();
       overlay.resizecanvas();
     };
+  }
+
+  // NOTE Helper methods for download button
+  async makeZip(content) {
+    const image_urls = content.tileSources.map((item) => item.url)
+    console.log("Debug: image_urls"); /// TODO remove! This is for debugging
+    console.log(image_urls); /// TODO remove! This is for debugging
+    try {
+      const zip = new JSZip();
+      const promises = image_urls.map(async (url, index) => {
+        const response = await fetch(url);
+        console.log("Debug: fetch response"); /// TODO remove! This is for debugging
+        console.log(response); /// TODO remove! This is for debugging
+        const blob = await response.blob();
+        console.log("Debug: blob"); /// TODO remove! This is for debugging
+        console.log(blob); /// TODO remove! This is for debugging
+        zip.file(`image_${index}.jpg`, blob);
+      });
+      await Promise.all(promises);
+      console.log("Debug: zip variable"); /// TODO remove! This is for debugging
+      console.log(zip); /// TODO remove! This is for debugging
+      const file = await zip.generateAsync({ type: 'blob' });
+      const url = window.URL.createObjectURL(file);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "quartos-archive_images.zip";
+      a.click();
+      URL.revokeObjectURL();
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   openTileSources(tileSources) {
@@ -392,7 +436,7 @@ class CanvasResource extends Component {
     if (firstTileSource && firstTileSource.type === 'image' && firstTileSource.url) {
       imageUrlForThumbnail = firstTileSource.url
       // don't force ssl for localhost
-      if( imageUrlForThumbnail.match(/^http:\/\/localhost/) ) {
+      if (imageUrlForThumbnail.match(/^http:\/\/localhost/)) {
         this.props.setImageUrl(key, imageUrlForThumbnail);
         if (tileSources.length > 1) {
           const newTileSources = [{ type: 'image', url: imageUrlForThumbnail }, ...tileSources.slice(1)]
@@ -413,13 +457,13 @@ class CanvasResource extends Component {
       this.props.setImageUrl(key, imageUrlForThumbnail);
       checkTileSource(
         resourceURL,
-        (validResourceURL) => { 
+        (validResourceURL) => {
           if (tileSources.length > 1) {
             const newTileSources = [validResourceURL, ...tileSources.slice(1)]
             this.osdViewer.open(newTileSources);
           } else this.osdViewer.open([validResourceURL]);
         },
-        (errorResponse) => { console.log( errorResponse ) }
+        (errorResponse) => { console.log(errorResponse) }
       )
     }
     this.refreshLayerSelect(tileSources);
@@ -442,7 +486,7 @@ class CanvasResource extends Component {
         } else {
           opt.label = `Page ${this.getLayerName(index)}`;
         }
-	this.layerSelect.appendChild(opt);
+        this.layerSelect.appendChild(opt);
       });
       this.layerSelect.selectedIndex = selected;
     }
@@ -450,25 +494,25 @@ class CanvasResource extends Component {
 
   // if a first target for this window has been specified, pan and zoom to it.
   onOpen() {
-    if( this.props.firstTarget && !this.hasOpenedOnce ) {
+    if (this.props.firstTarget && !this.hasOpenedOnce) {
       let targetHighLight = null;
-      for( let key in this.props.highlight_map ) {
+      for (let key in this.props.highlight_map) {
         let currentHighlight = this.props.highlight_map[key]
-        if( currentHighlight.id === this.props.firstTarget ) {
+        if (currentHighlight.id === this.props.firstTarget) {
           targetHighLight = currentHighlight
           break
         }
       }
-      if( targetHighLight ) {
+      if (targetHighLight) {
         const target = JSON.parse(targetHighLight.target)
         const x = target.left / fabricViewportScale
         const y = target.top / fabricViewportScale
         const w = target.width / fabricViewportScale
         const h = target.height / fabricViewportScale
         // back out a little so we can see highlight in context
-        const targetRect = new OpenSeadragon.Rect(x-0.1,y-0.1,w+0.2,h+0.2)
+        const targetRect = new OpenSeadragon.Rect(x - 0.1, y - 0.1, w + 0.2, h + 0.2)
         const viewport = this.osdViewer.viewport;
-        viewport.fitBoundsWithConstraints( targetRect );
+        viewport.fitBoundsWithConstraints(targetRect);
         this.hasOpenedOnce = true;
         // console.log(`tr: ${targetRect.toString()} tr2: ${targetRect2.toString()}`)
       }
@@ -477,12 +521,12 @@ class CanvasResource extends Component {
 
   canvasMouseDown(event) {
 
-    if( this.currentMode === 'edit' || this.currentMode === 'pan' ) return;
+    if (this.currentMode === 'edit' || this.currentMode === 'pan') return;
 
     this.isMouseDown = true;
     this.pointerCoords = this.overlay.fabricCanvas().getPointer(event.e);
 
-    switch(this.currentMode) {
+    switch (this.currentMode) {
       case 'marker':
         this.drawMarker(this.pointerCoords);
         break;
@@ -510,33 +554,33 @@ class CanvasResource extends Component {
         break;
 
       case 'colorize':
-          // select new color
-          const newColor = this.props.highlightColors[this.getInstanceKey()]
-          // get object, if one is clicked
-          const selectedObject = this.overlay.fabricCanvas().getActiveObject();
+        // select new color
+        const newColor = this.props.highlightColors[this.getInstanceKey()]
+        // get object, if one is clicked
+        const selectedObject = this.overlay.fabricCanvas().getActiveObject();
 
-          // make sure the click selected an object
-          if(selectedObject) {
-            selectedObject.set({ stroke: newColor });
-            // this deselects the highlight, which causes the color change to take place
-            //  without this line, a object that was previously selected prior to use of the tool would not change color until deselected
-            this.overlay.fabricCanvas().discardActiveObject();
+        // make sure the click selected an object
+        if (selectedObject) {
+          selectedObject.set({ stroke: newColor });
+          // this deselects the highlight, which causes the color change to take place
+          //  without this line, a object that was previously selected prior to use of the tool would not change color until deselected
+          this.overlay.fabricCanvas().discardActiveObject();
 
-            const highlight_id = this.highlight_map[selectedObject._highlightUid].id;
-            this.props.setSaving({ doneSaving: false });
-            this.props.updateHighlight(
-              highlight_id,
-              {color: newColor, target: JSON.stringify(selectedObject.toJSON(['_highlightUid', '_isMarker']))},
-              () => {
-                this.props.setSaving({ doneSaving: true });
-                this.props.setLastSaved(new Date().toLocaleString('en-US'));
-              }
-            );
-          }
-          break;
+          const highlight_id = this.highlight_map[selectedObject._highlightUid].id;
+          this.props.setSaving({ doneSaving: false });
+          this.props.updateHighlight(
+            highlight_id,
+            { color: newColor, target: JSON.stringify(selectedObject.toJSON(['_highlightUid', '_isMarker'])) },
+            () => {
+              this.props.setSaving({ doneSaving: true });
+              this.props.setLastSaved(new Date().toLocaleString('en-US'));
+            }
+          );
+        }
+        break;
 
       case 'lineDraw':
-        if( this.checkDoubleClick() ) {
+        if (this.checkDoubleClick()) {
           this.drawLine(this.pointerCoords, true);
           this.endLineMode();
         } else {
@@ -550,34 +594,34 @@ class CanvasResource extends Component {
   }
 
   canvasMouseMove(o) {
-    if( this.currentMode === 'edit' || this.currentMode === 'pan' ) return;
+    if (this.currentMode === 'edit' || this.currentMode === 'pan') return;
 
     if (this.currentMode === 'lineDraw' && this.lineInProgress) {
       this.pointerCoords = this.overlay.fabricCanvas().getPointer(o.e);
       this.drawLine(this.pointerCoords, false);
     }
 
-    if( this.newShape && this.isMouseDown ) {
+    if (this.newShape && this.isMouseDown) {
       const mouse = this.overlay.fabricCanvas().getPointer(o.e);
-      switch(this.currentMode) {
+      switch (this.currentMode) {
         case 'rect':
-          if(mouse.x < this.pointerCoords.x) {
-            this.newShape.set({left: mouse.x });
+          if (mouse.x < this.pointerCoords.x) {
+            this.newShape.set({ left: mouse.x });
           }
-          if(mouse.y < this.pointerCoords.y) {
-            this.newShape.set({top: mouse.y });
+          if (mouse.y < this.pointerCoords.y) {
+            this.newShape.set({ top: mouse.y });
           }
 
-          this.newShape.set({width: Math.abs(this.pointerCoords.x - mouse.x) });
-          this.newShape.set({height: Math.abs(this.pointerCoords.y - mouse.y) });
+          this.newShape.set({ width: Math.abs(this.pointerCoords.x - mouse.x) });
+          this.newShape.set({ height: Math.abs(this.pointerCoords.y - mouse.y) });
 
           this.overlay.fabricCanvas().renderAll();
           break;
         case 'circle':
-          if( Math.abs(mouse.x - this.pointerCoords.x) > Math.abs(mouse.y - this.pointerCoords.y) ) {
-            this.newShape.set({radius: Math.abs( mouse.x - this.pointerCoords.x ) });
+          if (Math.abs(mouse.x - this.pointerCoords.x) > Math.abs(mouse.y - this.pointerCoords.y)) {
+            this.newShape.set({ radius: Math.abs(mouse.x - this.pointerCoords.x) });
           } else {
-            this.newShape.set({radius: Math.abs( mouse.y - this.pointerCoords.y ) });
+            this.newShape.set({ radius: Math.abs(mouse.y - this.pointerCoords.y) });
           }
 
           this.overlay.fabricCanvas().renderAll();
@@ -590,8 +634,8 @@ class CanvasResource extends Component {
   }
 
   canvasMouseUp() {
-    if( this.currentMode !== 'rect' && this.currentMode !== 'circle') {
-      if( this.currentMode !== 'edit' && this.currentMode !== 'colorize' && this.currentMode !== 'pan' && this.currentMode !== 'lineDraw') {
+    if (this.currentMode !== 'rect' && this.currentMode !== 'circle') {
+      if (this.currentMode !== 'edit' && this.currentMode !== 'colorize' && this.currentMode !== 'pan' && this.currentMode !== 'lineDraw') {
         this.panClick(); // jonah *** change here the current mode to 'pan'
       }
       return;
@@ -614,29 +658,30 @@ class CanvasResource extends Component {
       this.props.highlightColors[key],
       label,
       savedHighlight => {
-          this.props.setHighlightThumbnail(
-            savedHighlight.id,
-            imageUrlForThumbnail,
-            aCoords,
-            svg
-          );
-          this.props.setSaving({ doneSaving: true });
-          this.props.setLastSaved(new Date().toLocaleString('en-US'));
+        this.props.setHighlightThumbnail(
+          savedHighlight.id,
+          imageUrlForThumbnail,
+          aCoords,
+          svg
+        );
+        this.props.setSaving({ doneSaving: true });
+        this.props.setLastSaved(new Date().toLocaleString('en-US'));
       });
     this.panClick(); // jonah *** change here the current mode to 'pan'
     this.newShape = null;
   }
 
   renderHighlights(overlay, highlight_map) {
-    const jsonBlob = {objects: []};
+    const jsonBlob = { objects: [] };
     for (const highlightUid in highlight_map) {
       const highlight = highlight_map[highlightUid];
       const parsedHighlight = JSON.parse(highlight.target);
-      if( this.props.firstTarget ) {
-        if( highlight.id === this.props.firstTarget ) {
+      if (this.props.firstTarget) {
+        if (highlight.id === this.props.firstTarget) {
           for (let i = 0; i < 3; i += 1) {
             // Copy the object 3 times to make the glow more visible
-            jsonBlob.objects.push({ ...parsedHighlight,
+            jsonBlob.objects.push({
+              ...parsedHighlight,
               selectable: false,
               hoverCursor: 'default',
               _isTargetChild: true,
@@ -674,11 +719,11 @@ class CanvasResource extends Component {
   // doing it this way because double click events are not reliably
   // processed by osdViewer or fabric js.
   checkDoubleClick() {
-    if( this.lastTime ) {
+    if (this.lastTime) {
       const currentTime = Date.now();
       const elapsedTime = currentTime - this.lastTime;
       this.lastTime = currentTime;
-      return ( elapsedTime < doubleClickTimeout );
+      return (elapsedTime < doubleClickTimeout);
     } else {
       this.lastTime = Date.now();
       return false;
@@ -697,36 +742,36 @@ class CanvasResource extends Component {
       strokeWidth: strokeWidth / this.overlay.fabricCanvas().getZoom()
     };
 
-    if( this.lineInProgress ) {
+    if (this.lineInProgress) {
       if (this.lineInProgress.radius) { // drawing first line segment
         // if we have a circle, replace it with a line
         const centerPoint = this.lineInProgress.getCenterPoint();
         const oldCircle = this.lineInProgress;
         this.lineInProgress = new fabric.Polyline(
-          [{ x: centerPoint.x, y: centerPoint.y}, { x: pointer.x, y: pointer.y }],
+          [{ x: centerPoint.x, y: centerPoint.y }, { x: pointer.x, y: pointer.y }],
           lineOptions
         );
-          this.overlay.fabricCanvas().remove(oldCircle);
-          this.overlay.fabricCanvas().add(this.lineInProgress);
+        this.overlay.fabricCanvas().remove(oldCircle);
+        this.overlay.fabricCanvas().add(this.lineInProgress);
       } else if (this.prevLineEndPoint && !activeShape) {
         // if we are just hovering make a line
         const oldHoverLine = this.hoverLine;
         this.hoverLine = new fabric.Polyline(
-          [{ x: this.prevLineEndPoint.x, y: this.prevLineEndPoint.y}, { x: pointer.x, y: pointer.y }],
+          [{ x: this.prevLineEndPoint.x, y: this.prevLineEndPoint.y }, { x: pointer.x, y: pointer.y }],
           lineOptions
         );
         this.overlay.fabricCanvas().remove(oldHoverLine);
         this.overlay.fabricCanvas().add(this.hoverLine);
-        
+
       } else {
         // otherwise, add to the line
-          const oldPolyline = this.lineInProgress;
-          const oldHoverLine = this.hoverLine;
-          const points = oldPolyline.points.concat({ x: pointer.x, y: pointer.y });
-          this.lineInProgress = new fabric.Polyline( points, lineOptions );
-          this.overlay.fabricCanvas().remove(oldHoverLine);
-          this.overlay.fabricCanvas().remove(oldPolyline);
-          this.overlay.fabricCanvas().add(this.lineInProgress);
+        const oldPolyline = this.lineInProgress;
+        const oldHoverLine = this.hoverLine;
+        const points = oldPolyline.points.concat({ x: pointer.x, y: pointer.y });
+        this.lineInProgress = new fabric.Polyline(points, lineOptions);
+        this.overlay.fabricCanvas().remove(oldHoverLine);
+        this.overlay.fabricCanvas().remove(oldPolyline);
+        this.overlay.fabricCanvas().add(this.lineInProgress);
       }
     }
     else {
@@ -761,7 +806,7 @@ class CanvasResource extends Component {
     let markerFill = fabric.Color.fromHex(this.props.highlightColors[this.getInstanceKey()]);
     markerFill.setAlpha(0.3);
     var rad = markerRadius / this.overlay.fabricCanvas().getZoom();
-    let markerCoords = { left: pCoords.x - rad, top:  pCoords.y - rad }
+    let markerCoords = { left: pCoords.x - rad, top: pCoords.y - rad }
     let marker = new fabric.Circle({
       radius: rad,
       left: markerCoords.left, // offset to put marker at center of click
@@ -789,19 +834,19 @@ class CanvasResource extends Component {
       this.props.highlightColors[this.getInstanceKey()],
       'Marker highlight',
       savedHighlight => {
-          this.props.setHighlightThumbnail(
-            savedHighlight.id,
-            imageUrlForThumbnail,
-            highlightCoords,
-            marker.toSVG()
-          );
-          this.props.setSaving({ doneSaving: true });
-          this.props.setLastSaved(new Date().toLocaleString('en-US'));
-    });
+        this.props.setHighlightThumbnail(
+          savedHighlight.id,
+          imageUrlForThumbnail,
+          highlightCoords,
+          marker.toSVG()
+        );
+        this.props.setSaving({ doneSaving: true });
+        this.props.setLastSaved(new Date().toLocaleString('en-US'));
+      });
   }
 
   endLineMode() {
-    if( !this.lineInProgress ) return;
+    if (!this.lineInProgress) return;
     const aCoords = this.lineInProgress.aCoords;
     const svg = this.lineInProgress.toSVG();
     const imageUrlForThumbnail = this.props.imageURLs[this.getInstanceKey()];
@@ -829,7 +874,7 @@ class CanvasResource extends Component {
         );
         this.props.setSaving({ doneSaving: true });
         this.props.setLastSaved(new Date().toLocaleString('en-US'));
-    });
+      });
     this.lineInProgress = null;
     this.overlay.fabricCanvas().defaultCursor = 'default';
     this.osdViewer.forceRedraw();
@@ -849,8 +894,8 @@ class CanvasResource extends Component {
     this.overlay.fabricCanvas().add(fabricObject);
   }
 
-  lockCanvasObject( object, lock ) {
-    if( lock ) {
+  lockCanvasObject(object, lock) {
+    if (lock) {
       object.lockScalingX = true;
       object.lockScalingY = true;
       object.lockRotation = true;
@@ -862,7 +907,7 @@ class CanvasResource extends Component {
       object.lockMovementY = true;
       object.hasControls = false;
     } else {
-      if( !object._isMarker ) {
+      if (!object._isMarker) {
         object.lockScalingX = false;
         object.lockScalingY = false;
         object.lockRotation = false;
@@ -877,10 +922,10 @@ class CanvasResource extends Component {
     }
   }
 
-  lockCanvasObjects( lock ) {
+  lockCanvasObjects(lock) {
     const canvasObjects = this.overlay.fabricCanvas().getObjects();
-    canvasObjects.forEach( object => {
-      this.lockCanvasObject( object, lock );
+    canvasObjects.forEach(object => {
+      this.lockCanvasObject(object, lock);
     });
   }
 
@@ -1032,7 +1077,7 @@ class CanvasResource extends Component {
       currentLayerName = currentLayer.name;
     } else if (currentLayer && currentLayer.url) {
       const url = currentLayer.url;
-      currentLayerName = decodeURIComponent(url.substring(url.lastIndexOf('/')+1, url.lastIndexOf('.')));
+      currentLayerName = decodeURIComponent(url.substring(url.lastIndexOf('/') + 1, url.lastIndexOf('.')));
     }
     return currentLayerName;
   }
@@ -1075,9 +1120,9 @@ class CanvasResource extends Component {
   hasLayers() {
     const { content } = this.props;
     return (
-      content 
-      && content.tileSources 
-      && Array.isArray(content.tileSources) 
+      content
+      && content.tileSources
+      && Array.isArray(content.tileSources)
       && content.tileSources.length > 1
     );
   }
@@ -1142,26 +1187,26 @@ class CanvasResource extends Component {
       pointerEvents: 'none',
     }
 
-    let editable = ( writeEnabled && lockedByMe );
+    let editable = (writeEnabled && lockedByMe);
     const mode = addTileSourceMode[document_id];
     const highlightHidden = !editable && highlightsHidden[key]
     const hasLayers = this.hasLayers();
 
-    if( !editable && this.currentMode !== 'pan' ) {
+    if (!editable && this.currentMode !== 'pan') {
       this.panClick();
     }
     // don't render highlights if they are hidden
-    if( !lockedByMe && this.overlay ) {
+    if (!lockedByMe && this.overlay) {
       const canvas = this.overlay.fabricCanvas()
-      if( highlightHidden && !canvas.isEmpty() ) {
+      if (highlightHidden && !canvas.isEmpty()) {
         canvas.clear();
       } else {
-        if( !highlightHidden && canvas.isEmpty() ) {
-          this.renderHighlights(this.overlay,this.highlight_map)
+        if (!highlightHidden && canvas.isEmpty()) {
+          this.renderHighlights(this.overlay, this.highlight_map)
         }
       }
     }
-    
+
     const currentLayerName = this.getLayerName(this.state.currentPage);
     const editingLayerName = this.props.editingLayerName[key];
 
@@ -1179,7 +1224,7 @@ class CanvasResource extends Component {
                     this.overlay.fabricCanvas().freeDrawingBrush.color = color;
                   }
                 }}
-                toggleColorPicker={() => {toggleCanvasColorPicker(key);}}
+                toggleColorPicker={() => { toggleCanvasColorPicker(key); }}
               />
               <IconButton
                 tooltip="Open highlight and navigate image"
@@ -1291,7 +1336,7 @@ class CanvasResource extends Component {
                 <LayerForward size={16} />
               </IconButton>
               <IconButton
-                disabled={!hasLayers || !(content && content.tileSources && this.state && this.state.currentPage !== content.tileSources.length-1) || loading}
+                disabled={!hasLayers || !(content && content.tileSources && this.state && this.state.currentPage !== content.tileSources.length - 1) || loading}
                 tooltip="Move layer down"
                 onClick={() => this.moveLayerClick(1)}
                 style={iconBackdropStyle}
@@ -1310,7 +1355,7 @@ class CanvasResource extends Component {
                 <RemoveFromPhotos />
               </IconButton>
               {hasLayers && (
-                <form 
+                <form
                   className="tile-name-form"
                   onSubmit={this.submitLayerName.bind(this)}
                   style={editingLayerName ? {} : { overflow: 'hidden' }}
@@ -1320,7 +1365,7 @@ class CanvasResource extends Component {
                     style={editingLayerName ? {} : { overflow: 'hidden' }}
                   >
                     <span className="current-tile-page">
-                      {this.state.currentPage+1}
+                      {this.state.currentPage + 1}
                     </span>
                     <span className="current-tile-name">
                       {`: ${!editingLayerName ? currentLayerName : ''}`}
@@ -1395,7 +1440,7 @@ class CanvasResource extends Component {
           }
           <div style={{ width: '100%', display: 'flex', alignItems: 'stretch', flexGrow: '1' }}>
             <Slider
-              sliderStyle={{marginTop: '0'}}
+              sliderStyle={{ marginTop: '0' }}
               axis='y'
               step={0.01}
               min={this.state.minZoom}

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -23,18 +24,8 @@
       NOTE: Added script to auto-render introduction
     -->
     <title>Quartos Archive 2.0</title>
-    <script type="text/javascript">
-      window.onload = function() {
-        let spans = document.getElementsByTagName("span");
-        for (let i = 0; i < spans.length; i++) {
-          if (spans[i].textContent === "Introduction") {
-            spans[i].click();
-            break;
-          }
-        }
-      }
-    </script>
   </head>
+
   <body>
     <noscript>
       You need to enable JavaScript to run this app.
@@ -50,5 +41,17 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+    <script type="text/javascript">
+      window.addEventListener('load', function () {
+        let spans = document.getElementsByTagName("span");
+        for (let i = 0; i < spans.length; i++) {
+          if (spans[i].textContent === "Introduction") {
+            spans[i].click();
+            break;
+          }
+        }
+      });
+    </script>
   </body>
+
 </html>

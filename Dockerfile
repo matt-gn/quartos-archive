@@ -24,8 +24,9 @@ EXPOSE 3000
 EXPOSE 3001
 
 # Install frontend
+# NOTE: Added 'yarn add jszip'
 WORKDIR $INSTALL_PATH/client
-RUN yarn install && NODE_OPTIONS="--max_old_space_size=2560" yarn build-craco
+RUN yarn install && yarn add jszip && NODE_OPTIONS="--max_old_space_size=2560" yarn build-craco
 WORKDIR $INSTALL_PATH
 RUN cp -a $INSTALL_PATH/client/build/. $INSTALL_PATH/public/
 RUN yarn deploy

@@ -400,22 +400,14 @@ class CanvasResource extends Component {
   // NOTE Helper methods for download button
   async makeZip(content) {
     const image_urls = content.tileSources.map((item) => item.url)
-    console.log("Debug: image_urls"); /// TODO remove! This is for debugging
-    console.log(image_urls); /// TODO remove! This is for debugging
     try {
       const zip = new JSZip();
       const promises = image_urls.map(async (url, index) => {
         const response = await fetch(url);
-        console.log("Debug: fetch response"); /// TODO remove! This is for debugging
-        console.log(response); /// TODO remove! This is for debugging
         const blob = await response.blob();
-        console.log("Debug: blob"); /// TODO remove! This is for debugging
-        console.log(blob); /// TODO remove! This is for debugging
         zip.file(`image_${index}.jpg`, blob);
       });
       await Promise.all(promises);
-      console.log("Debug: zip variable"); /// TODO remove! This is for debugging
-      console.log(zip); /// TODO remove! This is for debugging
       const file = await zip.generateAsync({ type: 'blob' });
       const url = window.URL.createObjectURL(file);
       const a = document.createElement("a");

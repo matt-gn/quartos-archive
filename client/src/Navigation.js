@@ -24,27 +24,27 @@ import LoginRegistrationDialog from './LoginRegistrationDialog';
 import AdminDialog from './AdminDialog';
 
 const LoginMenuBody = props => {
-  if (props.currentUser 
+  if (props.currentUser
     && props.currentUser.isSignedIn
     && props.currentUser.attributes
     && props.currentUser.attributes.confirmed) {
     return (
       <div>
-        <MenuItem primaryText = 'Sign out' onClick={() => {
+        <MenuItem primaryText='Sign out' onClick={() => {
           props.signOutUser()
-          .then(() => {
-            props.clearSelection()
-            props.hideAuthMenu();
-            if (props.location && props.location.pathname === '/') {
-              props.load();
-              props.returnHome();
-            }
-          });
+            .then(() => {
+              props.clearSelection()
+              props.hideAuthMenu();
+              if (props.location && props.location.pathname === '/') {
+                props.load();
+                props.returnHome();
+              }
+            });
         }} />
         {props.currentUser.attributes.admin &&
           <div>
             <Divider />
-            <MenuItem primaryText = 'Admin' onClick={() => {
+            <MenuItem primaryText='Admin' onClick={() => {
               props.showAdminDialog();
               props.hideAuthMenu();
             }} />
@@ -56,7 +56,7 @@ const LoginMenuBody = props => {
   return (
     <div>
       <MenuItem primaryText='Sign in' onClick={props.showLogin} />
-      <MenuItem primaryText='Register' onClick={props.showRegistration}/>
+      <MenuItem primaryText='Register' onClick={props.showRegistration} />
     </div>
   )
 }
@@ -71,7 +71,7 @@ class Navigation extends Component {
     };
   }
 
-  onTooltipOpen (e) {
+  onTooltipOpen(e) {
     e.persist();
     const layoutTooltipAnchor = e.currentTarget;
     e.preventDefault();
@@ -84,7 +84,7 @@ class Navigation extends Component {
     });
   }
 
-  onTooltipClose () {
+  onTooltipClose() {
     this.setState((prevState) => {
       return {
         ...prevState,
@@ -99,9 +99,9 @@ class Navigation extends Component {
 
   render() {
     let userMenuLabel = '';
-    if (this.props.currentUser 
-      && this.props.currentUser.isSignedIn 
-      && this.props.currentUser.attributes 
+    if (this.props.currentUser
+      && this.props.currentUser.isSignedIn
+      && this.props.currentUser.attributes
       && this.props.currentUser.attributes.confirmed
     ) { // if a user is signed in
       userMenuLabel += this.props.currentUser.attributes.name;
@@ -109,13 +109,14 @@ class Navigation extends Component {
         userMenuLabel += ' (Pending approval)';
       }
     }
+    // NOTE New nav bar logo
     return (
-      <div>	// NOTE New nav bar logo
+      <div>
         <AppBar
           title={<div>
-            <span><img src="/images/archive.png" height="65" width="220"></img></span>
+            <span><img src="/images/archive.png" height="65" width="220" alt="The New Shakespeare Quartos Archive"></img></span>
             {this.props.isLoading &&
-              <CircularProgress color={'#FFF'} style={{top: '12px', left: '18px'}}/>
+              <CircularProgress color={'#FFF'} style={{ top: '12px', left: '18px' }} />
             }
           </div>}
           showMenuIconButton={!this.props.isHome}
@@ -130,8 +131,8 @@ class Navigation extends Component {
           )}
           iconElementRight={
             <div style={{ display: 'flex' }}>
-              {!this.props.isHome && 
-                <div style={{display: 'flex'}}>
+              {!this.props.isHome &&
+                <div style={{ display: 'flex' }}>
                   <DropDownMenu
                     value={this.props.currentLayout}
                     onChange={this.props.setCurrentLayout}
@@ -152,17 +153,17 @@ class Navigation extends Component {
                 icon={<MoreVert />}
                 label={userMenuLabel}
                 labelPosition='before'
-                onClick={event => {this.props.toggleAuthMenu(event.currentTarget);}}
+                onClick={event => { this.props.toggleAuthMenu(event.currentTarget); }}
               />
             </div>
           }
-          style={{position: 'fixed', top: 0, zIndex: 9999}}
+          style={{ position: 'fixed', top: 0, zIndex: 9999 }}
         />
         <Popover
           open={this.props.authMenuShown}
           anchorEl={this.props.authMenuAnchor}
-          anchorOrigin={{horizontal: 'right', vertical: 'top'}}
-          targetOrigin={{horizontal: 'right', vertical: 'top'}}
+          anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
+          targetOrigin={{ horizontal: 'right', vertical: 'top' }}
           onRequestClose={this.props.hideAuthMenu}
           style={{ marginTop: '52px' }}
         >
@@ -175,11 +176,11 @@ class Navigation extends Component {
           anchorEl={this.state.layoutTooltipAnchor}
           zDepth={5}
           className="tooltip-popover extra-margin-tooltip"
-          anchorOrigin={{horizontal: 'middle', vertical: 'bottom'}}
-          targetOrigin={{horizontal: 'middle', vertical: 'top'}}
+          anchorOrigin={{ horizontal: 'middle', vertical: 'bottom' }}
+          targetOrigin={{ horizontal: 'middle', vertical: 'top' }}
           useLayerForClickAway={false}
           autoCloseWhenOffScreen={false}
-      	>
+        >
           Set grid layout
         </Popover>
         <LoginRegistrationDialog />

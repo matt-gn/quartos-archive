@@ -124,13 +124,13 @@ class Project extends Component {
   }
 
   preloadDocs() {
-    if (this.preload.length > 0) {
+    const { openDocumentIds } = this.props;
+    if (this.preload.length > 0 && openDocumentIds.length === 0) {
       for (let i = 0; i < this.preload.length; i++) {
         this.props.openDocument(this.preload[i], null, true, i + 1);
       }
-      this.preload = [];
     }
-    // TODO ELSE load introduction...
+    this.preload = [];
   }
 
   componentDidUpdate(prevProps) {
@@ -144,7 +144,6 @@ class Project extends Component {
 
   renderDeleteDialog() {
     const { deleteDialogTitle, closeDeleteDialog, deleteDialogSubmit, deleteDialogOpen, deleteDialogBody, confirmDeleteDialog } = this.props;
-
     return (
       <Dialog
         title={deleteDialogTitle}

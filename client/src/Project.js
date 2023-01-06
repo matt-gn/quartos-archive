@@ -129,8 +129,8 @@ class Project extends Component {
   preloadDocs() {
     for (let i = 0; i < this.preload.length; i++) {
       this.props.openDocument(this.preload[i], null, true, i + 1);
+      this.firstLoad = false;
     }
-    this.firstLoad = false;
   }
 
   componentDidUpdate(prevProps) {

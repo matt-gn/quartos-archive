@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Route, Redirect } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import darkBaseTheme from 'material-ui/styles/baseThemes/darkBaseTheme';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
@@ -11,7 +11,6 @@ import 'prosemirror-menu/style/menu.css';
 import 'prosemirror-example-setup/style/style.css';
 
 export default class App extends Component {
-  // NOTE Added '/' redirect to main project page; project list accessible at '/projects'
   render() {
     return (
       <MuiThemeProvider muiTheme={getMuiTheme({
@@ -30,11 +29,9 @@ export default class App extends Component {
       })}>
         <div>
           <main>
-            <Route exact path='/'>
-	      <Redirect to='/1' />
-	    </Route>
-	    <Route exact path='/projects' component={Home} />
-            <Route path='/:slug' component={Project} />
+            <Route exact path='/' component={Project} />
+            <Route exact path='/:slug-:loadIDs' component={Project} />
+            <Route exact path='/:slug' component={Project} />
           </main>
         </div>
       </MuiThemeProvider>

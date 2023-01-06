@@ -12,6 +12,7 @@ import MenuItem from 'material-ui/MenuItem';
 import CircularProgress from 'material-ui/CircularProgress';
 import Divider from 'material-ui/Divider';
 import DropDownMenu from 'material-ui/DropDownMenu';
+import NavigationArrowUpward from 'material-ui/svg-icons/navigation/arrow-upward';
 import MenuIcon from 'material-ui/svg-icons/navigation/menu';
 import MoreVert from 'material-ui/svg-icons/navigation/more-vert';
 import IconButton from 'material-ui/IconButton';
@@ -68,6 +69,7 @@ class Navigation extends Component {
     this.state = {
       layoutTooltipOpen: false,
       layoutTooltipAnchor: null,
+      dlTooltip: 'Copy link to current screen',
     };
   }
 
@@ -92,9 +94,23 @@ class Navigation extends Component {
       }
     });
   }
+
   onCloseProject = () => {
     this.props.clearSelection()
     this.props.returnHome()
+  }
+
+  getAccessLink(openDocumentIds) {
+    let host = `${window.location.origin}`;
+    let preloadIds = "";
+    for (let i = 0; i < openDocumentIds.length; i++) {
+      if (i > 0) {
+        preloadIds += "+";
+      }
+      preloadIds += openDocumentIds[i];
+    }
+    navigator.clipboard.writeText(`${host}/1-${preloadIds}`);
+    this.setState({ dlTooltip: 'Copied!' });
   }
 
   render() {
@@ -109,6 +125,7 @@ class Navigation extends Component {
         userMenuLabel += ' (Pending approval)';
       }
     }
+
     // NOTE New nav bar logo
     return (
       <div>
@@ -133,6 +150,14 @@ class Navigation extends Component {
             <div style={{ display: 'flex' }}>
               {!this.props.isHome &&
                 <div style={{ display: 'flex' }}>
+                  <IconButton
+                    onClick={event => { this.getAccessLink(this.props.openDocumentIds); }}
+                    tooltip={this.state.dlTooltip}
+                    tooltipPosition="bottom-left"
+                  >
+                    <NavigationArrowUpward color="white" />
+                  </IconButton>
+
                   <DropDownMenu
                     value={this.props.currentLayout}
                     onChange={this.props.setCurrentLayout}
@@ -185,7 +210,7 @@ class Navigation extends Component {
         </Popover>
         <LoginRegistrationDialog />
         <AdminDialog />
-      </div>	// NOTE Removed search bar and 'Return to top' button
+      </div>
     )
   }
 }

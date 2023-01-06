@@ -75,7 +75,7 @@ const initialState = {
   uploadError: null,
 };
 
-export default function(state = initialState, action) {
+export default function (state = initialState, action) {
   switch (action.type) {
     case LOAD_PROJECT:
       return {
@@ -197,7 +197,7 @@ export default function(state = initialState, action) {
       return {
         ...state,
         sidebarOpen,
-        sidebarWidth 
+        sidebarWidth
       };
 
     case SHOW_BATCH_IMAGE_PROMPT:
@@ -229,7 +229,7 @@ export default function(state = initialState, action) {
         uploading: false,
         uploadError: action.err,
       };
-    
+
     case IMAGE_UPLOAD_STARTED:
       const uploads = action.signedIds.map((signedId) => ({
         signedId,
@@ -239,7 +239,7 @@ export default function(state = initialState, action) {
         ...state,
         uploads,
       };
-    
+
     case IMAGE_UPLOAD_TO_RAILS_SUCCESS:
       const uploadsWithFilename = state.uploads.map((upload) => ({
         ...upload,
@@ -259,7 +259,7 @@ export default function(state = initialState, action) {
         ...state,
         uploads: createdUploads,
       };
-      
+
     case IMAGE_UPLOAD_COMPLETE:
       const newUploads = state.uploads.map((upload) => ({
         ...upload,
@@ -271,7 +271,7 @@ export default function(state = initialState, action) {
         uploads: newUploads,
         uploading: stillUploadingComplete,
       };
-    
+
     case IMAGE_UPLOAD_ERRORED:
       const uploadsWithError = state.uploads.map((upload) => ({
         ...upload,
@@ -303,7 +303,7 @@ export default function(state = initialState, action) {
         ...state,
         folderData: action.folders,
       }
-      
+
     case SHOW_CLOSE_DIALOG:
       return {
         ...state,
@@ -321,7 +321,7 @@ export default function(state = initialState, action) {
 }
 
 export function clearProject() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: CLOSE_SEARCH_POPUP
     });
@@ -332,7 +332,7 @@ export function clearProject() {
 }
 
 export function loadProject(projectId, title) {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: LOAD_PROJECT
     });
@@ -346,37 +346,37 @@ export function loadProject(projectId, title) {
         'uid': localStorage.getItem('uid')
       }
     })
-    .then(response => {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-      return response;
-    })
-    .then(response => response.json())
-    .then(project => {
-      if( project.forbidden ) {
-        dispatch(push('/'))
-      } else {
-        dispatch({
-          type: GET_SUCCESS,
-          projectId: project.id,
-          projectTitle: project.title,
-          projectDescription: project.description,
-          contentsChildren: project['contents_children'],
-          userProjectPermissions: project['user_project_permissions'],
-          public: project.public,
-          currentUserPermissions: project['current_user_permissions']
-        })      
-      }
-    })
-    .catch(() => dispatch({
-      type: GET_ERRORED
-    }));
+      .then(response => {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+        return response;
+      })
+      .then(response => response.json())
+      .then(project => {
+        if (project.forbidden) {
+          dispatch(push('/'))
+        } else {
+          dispatch({
+            type: GET_SUCCESS,
+            projectId: project.id,
+            projectTitle: project.title,
+            projectDescription: project.description,
+            contentsChildren: project['contents_children'],
+            userProjectPermissions: project['user_project_permissions'],
+            public: project.public,
+            currentUserPermissions: project['current_user_permissions']
+          })
+        }
+      })
+      .catch(() => dispatch({
+        type: GET_ERRORED
+      }));
   };
 }
 
 export function newProject() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: NEW_PROJECT
     });
@@ -397,33 +397,33 @@ export function newProject() {
         title: 'Untitled Project'
       })
     })
-    .then(response => {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-      return response;
-    })
-    .then(response => response.json())
-    .then(project => {
-      dispatch({
-        type: POST_SUCCESS,
-        projectId: project.id,
-        projectTitle: project.title,
-        userProjectPermissions: project['user_project_permissions'],
-        public: project.public,
-        currentUserPermissions: project['current_user_permissions']
-      });
-      dispatch(replace(`/${project.id}`));
-      dispatch(showSettings());
-    })
-    .catch(() => dispatch({
-      type: POST_ERRORED
-    }));
+      .then(response => {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+        return response;
+      })
+      .then(response => response.json())
+      .then(project => {
+        dispatch({
+          type: POST_SUCCESS,
+          projectId: project.id,
+          projectTitle: project.title,
+          userProjectPermissions: project['user_project_permissions'],
+          public: project.public,
+          currentUserPermissions: project['current_user_permissions']
+        });
+        dispatch(replace(`/${project.id}`));
+        dispatch(showSettings());
+      })
+      .catch(() => dispatch({
+        type: POST_ERRORED
+      }));
   };
 }
 
 export function updateProject(projectId, attributes) {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: UPDATE_PROJECT
     });
@@ -441,33 +441,33 @@ export function updateProject(projectId, attributes) {
       method: 'PATCH',
       body: JSON.stringify(attributes)
     })
-    .then(response => {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-      return response;
-    })
-    .then(response => response.json())
-    .then(project => {
-      dispatch({
-        type: PATCH_SUCCESS,
-        projectId: project.id,
-        projectTitle: project.title,
-        projectDescription: project.description,
-        contentsChildren: project['contents_children'],
-        userProjectPermissions: project['user_project_permissions'],
-        public: project.public,
-        currentUserPermissions: project['current_user_permissions']
-      });
-    })
-    .catch(() => dispatch({
-      type: PATCH_ERRORED
-    }));
+      .then(response => {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+        return response;
+      })
+      .then(response => response.json())
+      .then(project => {
+        dispatch({
+          type: PATCH_SUCCESS,
+          projectId: project.id,
+          projectTitle: project.title,
+          projectDescription: project.description,
+          contentsChildren: project['contents_children'],
+          userProjectPermissions: project['user_project_permissions'],
+          public: project.public,
+          currentUserPermissions: project['current_user_permissions']
+        });
+      })
+      .catch(() => dispatch({
+        type: PATCH_ERRORED
+      }));
   };
 }
 
 export function openDocumentPopover(target) {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: OPEN_DOCUMENT_POPOVER,
       target
@@ -476,7 +476,7 @@ export function openDocumentPopover(target) {
 }
 
 export function closeDocumentPopover() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: CLOSE_DOCUMENT_POPOVER
     });
@@ -484,7 +484,7 @@ export function closeDocumentPopover() {
 }
 
 export function showSettings() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: SETTINGS_SHOWN
     });
@@ -492,7 +492,7 @@ export function showSettings() {
 }
 
 export function hideSettings() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: SETTINGS_HIDDEN
     });
@@ -500,7 +500,7 @@ export function hideSettings() {
 }
 
 export function setNewPermissionUser(user) {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: NEW_PERMISSION_USER_CHANGE,
       user
@@ -509,7 +509,7 @@ export function setNewPermissionUser(user) {
 }
 
 export function setNewPermissionLevel(level) {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: NEW_PERMISSION_LEVEL_CHANGE,
       level
@@ -518,7 +518,7 @@ export function setNewPermissionLevel(level) {
 }
 
 export function createNewPermission() {
-  return function(dispatch, getState) {
+  return function (dispatch, getState) {
     const { id, newPermissionUser, newPermissionLevel } = getState().project;
 
     if (newPermissionUser !== null) {
@@ -543,26 +543,26 @@ export function createNewPermission() {
           permission: newPermissionLevel
         })
       })
-      .then(response => {
-        if (!response.ok) {
-          throw Error(response.statusText);
-        }
-      })
-      .then(() => {
-        dispatch({
-          type: CREATE_PERMISSION_SUCCESS
-        });
-        dispatch(loadProject(id));
-      })
-      .catch(() => dispatch({
-        type: CREATE_PERMISSION_ERRORED
-      }));
+        .then(response => {
+          if (!response.ok) {
+            throw Error(response.statusText);
+          }
+        })
+        .then(() => {
+          dispatch({
+            type: CREATE_PERMISSION_SUCCESS
+          });
+          dispatch(loadProject(id));
+        })
+        .catch(() => dispatch({
+          type: CREATE_PERMISSION_ERRORED
+        }));
     }
   }
 }
 
 export function deletePermission(id) {
-  return function(dispatch, getState) {
+  return function (dispatch, getState) {
     dispatch({
       type: CREATE_PERMISSION_LOADING
     });
@@ -579,25 +579,25 @@ export function deletePermission(id) {
       },
       method: 'DELETE'
     })
-    .then(response => {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-    })
-    .then(() => {
-      dispatch({
-        type: CREATE_PERMISSION_SUCCESS
-      });
-      dispatch(loadProject(getState().project.id));
-    })
-    .catch(() => dispatch({
-      type: CREATE_PERMISSION_ERRORED
-    }));
+      .then(response => {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+      })
+      .then(() => {
+        dispatch({
+          type: CREATE_PERMISSION_SUCCESS
+        });
+        dispatch(loadProject(getState().project.id));
+      })
+      .catch(() => dispatch({
+        type: CREATE_PERMISSION_ERRORED
+      }));
   }
 }
 
 export function updatePermission(id, permissionLevel) {
-  return function(dispatch, getState) {
+  return function (dispatch, getState) {
     dispatch({
       type: CREATE_PERMISSION_LOADING
     });
@@ -617,25 +617,25 @@ export function updatePermission(id, permissionLevel) {
         permission: permissionLevel
       })
     })
-    .then(response => {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-    })
-    .then(() => {
-      dispatch({
-        type: CREATE_PERMISSION_SUCCESS
-      });
-      dispatch(loadProject(getState().project.id));
-    })
-    .catch(() => dispatch({
-      type: CREATE_PERMISSION_ERRORED
-    }));
+      .then(response => {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+      })
+      .then(() => {
+        dispatch({
+          type: CREATE_PERMISSION_SUCCESS
+        });
+        dispatch(loadProject(getState().project.id));
+      })
+      .catch(() => dispatch({
+        type: CREATE_PERMISSION_ERRORED
+      }));
   }
 }
 
 export function checkInAll(projectID) {
-  return function(dispatch) {
+  return function (dispatch) {
     fetch(`/projects/${projectID}/check_in`, {
       headers: {
         'access-token': localStorage.getItem('access-token'),
@@ -648,28 +648,28 @@ export function checkInAll(projectID) {
       },
       method: 'POST'
     })
-    .then(response => {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-      return response;
-    })
-    .then(response => response.json())
-    .then(status => {
-      dispatch({
-        type: CHECK_IN_DOCS,
-        projectId: projectID,
-        docIDs: status.checked_in_docs,
-      });
-    })
-    .catch(() => dispatch({
-      type: POST_ERRORED
-    }));
+      .then(response => {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+        return response;
+      })
+      .then(response => response.json())
+      .then(status => {
+        dispatch({
+          type: CHECK_IN_DOCS,
+          projectId: projectID,
+          docIDs: status.checked_in_docs,
+        });
+      })
+      .catch(() => dispatch({
+        type: POST_ERRORED
+      }));
   };
 }
 
 export function toggleDeleteConfirmation() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: TOGGLE_DELETE_CONFIRMATION
     });
@@ -677,7 +677,7 @@ export function toggleDeleteConfirmation() {
 }
 
 export function toggleSidebar() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: TOGGLE_SIDEBAR
     });
@@ -685,7 +685,7 @@ export function toggleSidebar() {
 }
 
 export function deleteProject(projectId) {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: DELETE_PROJECT
     });
@@ -702,25 +702,25 @@ export function deleteProject(projectId) {
       },
       method: 'DELETE'
     })
-    .then(response => {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-    })
-    .then(() => {
-      dispatch({
-        type: DELETE_SUCCESS
-      });
-      dispatch(push('/'));
-    })
-    .catch(() => dispatch({
-      type: DELETE_ERRORED
-    }));
+      .then(response => {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+      })
+      .then(() => {
+        dispatch({
+          type: DELETE_SUCCESS
+        });
+        dispatch(push('/'));
+      })
+      .catch(() => dispatch({
+        type: DELETE_ERRORED
+      }));
   }
 }
 
 export function hideBatchImagePrompt() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: HIDE_BATCH_IMAGE_PROMPT,
     });
@@ -728,7 +728,7 @@ export function hideBatchImagePrompt() {
 }
 
 export function showBatchImagePrompt({ projectId }) {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: SHOW_BATCH_IMAGE_PROMPT,
       projectId,
@@ -738,7 +738,7 @@ export function showBatchImagePrompt({ projectId }) {
 }
 
 export function startUploading() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: SET_UPLOADING_TRUE,
     });
@@ -746,7 +746,7 @@ export function startUploading() {
 }
 
 export function killUploading(err) {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: KILL_UPLOADING,
       err,
@@ -755,7 +755,7 @@ export function killUploading(err) {
 }
 
 function getFolderDataFromIds({ folderIds }) {
-  return function(dispatch, getState) {
+  return function (dispatch, getState) {
     const { id } = getState().project;
     fetch('/document_folders/get_many', {
       headers: {
@@ -773,31 +773,31 @@ function getFolderDataFromIds({ folderIds }) {
         project_id: id,
       })
     })
-    .then(response => {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-      return response.json()
-    })
-    .then(folders => {
-      dispatch({
-        type: ADD_FOLDER_DATA,
-        folders: folders.map(folder => ({
-          id: folder[0],
-          title: folder[1],
-          parent_type: folder[2],
-          parent_id: folder[3],
-        }))
+      .then(response => {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+        return response.json()
       })
-    })
-    .catch(error => {
-      console.error(error);
-    });
+      .then(folders => {
+        dispatch({
+          type: ADD_FOLDER_DATA,
+          folders: folders.map(folder => ({
+            id: folder[0],
+            title: folder[1],
+            parent_type: folder[2],
+            parent_id: folder[3],
+          }))
+        })
+      })
+      .catch(error => {
+        console.error(error);
+      });
   }
 }
 
 export function getFolderData({ projectId }) {
-  return function(dispatch, getState) {
+  return function (dispatch, getState) {
     fetch(`/projects/${projectId}`, {
       headers: {
         'access-token': localStorage.getItem('access-token'),
@@ -807,34 +807,34 @@ export function getFolderData({ projectId }) {
         'uid': localStorage.getItem('uid')
       }
     })
-    .then(response => {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-      return response;
-    })
-    .then(response => response.json())
-    .then(project => {
-      let folderIds = [];
-      if (project.contents_children) { 
-        project.contents_children.filter(
-          child => child['document_kind'] === 'folder'
-        ).forEach(child => {
-          folderIds.push(child.id);
-          child.descendant_folder_ids.forEach(descendant => {
-            if (!folderIds.includes(descendant)) {
-              folderIds.push(descendant);
-            }
-          })
-        });
-        dispatch(getFolderDataFromIds({ folderIds }));
-      }
-    });
+      .then(response => {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+        return response;
+      })
+      .then(response => response.json())
+      .then(project => {
+        let folderIds = [];
+        if (project.contents_children) {
+          project.contents_children.filter(
+            child => child['document_kind'] === 'folder'
+          ).forEach(child => {
+            folderIds.push(child.id);
+            child.descendant_folder_ids.forEach(descendant => {
+              if (!folderIds.includes(descendant)) {
+                folderIds.push(descendant);
+              }
+            })
+          });
+          dispatch(getFolderDataFromIds({ folderIds }));
+        }
+      });
   }
 }
 
 export function showCloseDialog() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: SHOW_CLOSE_DIALOG,
     })
@@ -842,7 +842,7 @@ export function showCloseDialog() {
 }
 
 export function hideCloseDialog() {
-  return function(dispatch) {
+  return function (dispatch) {
     dispatch({
       type: HIDE_CLOSE_DIALOG,
     })

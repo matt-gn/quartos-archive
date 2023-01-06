@@ -139,7 +139,7 @@ class CanvasResource extends Component {
   }
 
   componentDidMount() {
-    const { content, highlight_map, document_id, setCanvasHighlightColor, setAddTileSourceMode, updateHighlight, addHighlight, setHighlightThumbnail } = this.props;
+    const { content, resourceName, highlight_map, document_id, setCanvasHighlightColor, setAddTileSourceMode, updateHighlight, addHighlight, setHighlightThumbnail } = this.props;
     this.highlight_map = highlight_map;
 
     const initialColor = yellow500;
@@ -218,12 +218,12 @@ class CanvasResource extends Component {
     // NOTE Download Image button
     const downloadButton = this.downloadButton = new OpenSeadragon.Button({
       tooltip: "Download document as ZIP file",
-      srcRest: "/images/download.png",
-      srcGroup: "/images/download.png",
-      srcHover: "/images/download.png",
-      srcDown: "/images/download.png",
+      srcRest: "/images/save_rest.png",
+      srcGroup: "/images/save_hover.png",
+      srcHover: "/images/save_hover.png",
+      srcDown: "/images/save_pressed.png",
       onRelease: () => {
-        this.makeZip(content);
+        this.makeZip(content, resourceName);
       },
     });
 
@@ -398,7 +398,7 @@ class CanvasResource extends Component {
   }
 
   // NOTE Helper methods for download button
-  async makeZip(content) {
+  async makeZip(content, resourceName) {
     const image_urls = content.tileSources.map((item) => item.url)
     try {
       const zip = new JSZip();
@@ -412,7 +412,7 @@ class CanvasResource extends Component {
       const url = window.URL.createObjectURL(file);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "quartos-archive_images.zip";
+      a.download = `quartos-archive_${resourceName}.zip`;
       a.click();
       URL.revokeObjectURL();
     } catch (error) {
@@ -1143,6 +1143,8 @@ class CanvasResource extends Component {
     const key = this.getInstanceKey();
 
     this.highlight_map = this.props.highlight_map;
+    // this.highlight_map = this.props.highlight_map[this.state.currentPage];
+    // TODO This is for the layer highlight impelementation
 
     const iconBackdropStyle = {
       width: '20px',

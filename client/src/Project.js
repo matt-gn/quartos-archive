@@ -30,6 +30,7 @@ class Project extends Component {
     this.mouseY = 0;
     this.rolloverTimer = null;
     this.preload = [];
+    this.firstLoad = true;
   }
 
   setFocusHighlight(document_id, highlight_id, key) {
@@ -120,18 +121,16 @@ class Project extends Component {
     let slug = this.props.match.params.slug ? this.props.match.params.slug : '1';
     this.props.loadProject(slug, "title");
     const INTRO_DOC_ID = '8';       // NOTE This loads the intro doc -- change this to load a different doc
-    if (this.props.openDocumentIds.length === 0) {
+    if (this.firstLoad) {
       this.preload = this.props.match.params.loadIDs ? this.props.match.params.loadIDs.split('+') : [INTRO_DOC_ID];
     }
   }
 
   preloadDocs() {
-    if (this.preload.length > 0) {
-      for (let i = 0; i < this.preload.length; i++) {
-        this.props.openDocument(this.preload[i], null, true, i + 1);
-      }
+    for (let i = 0; i < this.preload.length; i++) {
+      this.props.openDocument(this.preload[i], null, true, i + 1);
     }
-    this.preload = [];
+    this.firstLoad = false;
   }
 
   componentDidUpdate(prevProps) {

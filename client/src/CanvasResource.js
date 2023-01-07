@@ -402,10 +402,11 @@ class CanvasResource extends Component {
     const image_urls = content.tileSources.map((item) => item.url)
     try {
       const zip = new JSZip();
+      const imagesFolder = zip.folder(`quartos-archive_${resourceName}`);
       const promises = image_urls.map(async (url, index) => {
-        const response = await fetch(url);
+        const response = await fetch(url, {mode: 'no-cors'});
         const blob = await response.blob();
-        zip.file(`image_${index}.jpg`, blob);
+        imagesFolder.file(`image_${index + 1}.jpg`, blob);
       });
       await Promise.all(promises);
       const file = await zip.generateAsync({ type: 'blob' });

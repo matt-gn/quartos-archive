@@ -119,10 +119,13 @@ class Project extends Component {
     window.hideRollover = this.hideRollover.bind(this);
     let slug = this.props.match.params.slug ? this.props.match.params.slug : '1';
     this.props.loadProject(slug, "title");
-    //const INTRO_DOC_ID = '8';       // NOTE This loads the intro doc -- change this to load a different doc
+    const INTRO_DOC_ID = '8';       // NOTE This loads the intro doc -- change this to load a different doc
     console.log('_________COMPONENT MOUNTED_______');
     console.log('this.props.match.params.loadIDs', this.props.match.params.loadIDs);
     this.preload = this.props.match.params.loadIDs ? this.props.match.params.loadIDs.split('+') : [];
+    if (window.location.href === "https://quartos-archive.net/") {
+      this.preload = [INTRO_DOC_ID];
+    }
   }
 
   preloadDocs() {
